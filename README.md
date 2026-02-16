@@ -20,7 +20,19 @@ Python >= 3.10.
 
 ## Quick Start
 
-Add to your Claude Code MCP settings (`~/.claude/settings.json` or project `.mcp.json`):
+Add the MCP server globally (available across all projects):
+
+```bash
+claude mcp add --scope user --transport stdio mem0 \
+  --env MEM0_QDRANT_URL=http://localhost:6333 \
+  --env MEM0_EMBED_URL=http://localhost:11434 \
+  --env MEM0_EMBED_MODEL=bge-m3 \
+  --env MEM0_EMBED_DIMS=1024 \
+  --env MEM0_USER_ID=your-user-id \
+  -- uvx --from git+https://github.com/elvismdev/mem0-mcp-selfhosted.git mem0-mcp-selfhosted
+```
+
+Or add it to a single project by creating `.mcp.json` in the project root:
 
 ```json
 {
