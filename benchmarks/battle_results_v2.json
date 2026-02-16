@@ -1,0 +1,1744 @@
+{
+  "timestamp": "2026-02-15T15:38:42",
+  "models": {
+    "claude": "claude-opus-4-6",
+    "gemini": "gemini-2.5-flash-lite"
+  },
+  "total_cases": 188,
+  "tokens": {
+    "claude": {
+      "input": 202136,
+      "output": 20891
+    },
+    "gemini": {
+      "input": 76956,
+      "output": 14708
+    }
+  },
+  "cost": {
+    "claude": 4.5989,
+    "gemini": 0.010184
+  },
+  "avg_latency": {
+    "claude": 2.514,
+    "gemini": 0.638
+  },
+  "dimensions": {
+    "D1: Entity Extraction F1": {
+      "claude": 0.791,
+      "gemini": 0.8538,
+      "winner": "GEMINI"
+    },
+    "D1b: Entity Recall": {
+      "claude": 1.0,
+      "gemini": 0.9566,
+      "winner": "CLAUDE"
+    },
+    "D2: Relationship Quality": {
+      "claude": 0.726,
+      "gemini": 0.7119,
+      "winner": "CLAUDE"
+    },
+    "D3: Contradiction Detection": {
+      "claude": 1.0,
+      "gemini": 0.8,
+      "winner": "CLAUDE"
+    },
+    "D4: Tool Reliability": {
+      "claude": 1.0,
+      "gemini": 1.0,
+      "winner": "TIE"
+    },
+    "D5: Schema Adherence": {
+      "claude": 1.0,
+      "gemini": 1.0,
+      "winner": "TIE"
+    },
+    "D6: Hallucination Resistance": {
+      "claude": 0.981,
+      "gemini": 0.9726,
+      "winner": "TIE"
+    },
+    "D7: Cost & Latency": {
+      "claude": 0,
+      "gemini": 0,
+      "winner": "GEMINI"
+    }
+  },
+  "case_details": [
+    {
+      "id": "E01",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 0.8571,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E02",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E03",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 1.0,
+      "gemini_f1": 0.8,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E04",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E05",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E06",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E07",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 0.8,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E08",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 0.6667,
+      "gemini_f1": 0.6667,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E09",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E10",
+      "phase": "entity",
+      "difficulty": "easy",
+      "claude_f1": 0.8,
+      "gemini_f1": 0.8,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E11",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8571,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E12",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8571,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E13",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8889,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E14",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 1.0,
+      "gemini_f1": 0.8889,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E15",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.6667,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E16",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 1.0,
+      "gemini_f1": 0.6667,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E17",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E18",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8889,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E19",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.75,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E20",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.6667,
+      "gemini_f1": 0.6667,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E21",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E22",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8571,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E23",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 1.0,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E24",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8889,
+      "gemini_f1": 0.8889,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E25",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E26",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E27",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8235,
+      "gemini_f1": 0.9231,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E28",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 1.0,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E29",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E30",
+      "phase": "entity",
+      "difficulty": "medium",
+      "claude_f1": 0.8571,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E31",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E32",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.9091,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E33",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E34",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.9231,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E35",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.7273,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E36",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E37",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.6667,
+      "gemini_f1": 0.8,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E38",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8333,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E39",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E40",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8333,
+      "gemini_f1": 0.8333,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E41",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.4,
+      "gemini_f1": 0.6667,
+      "claude_halluc": 2,
+      "gemini_halluc": 2
+    },
+    {
+      "id": "E42",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 1,
+      "gemini_halluc": 1
+    },
+    {
+      "id": "E43",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.5,
+      "gemini_f1": 0.5,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E44",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8571,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E45",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.5,
+      "gemini_f1": 0.5,
+      "claude_halluc": 1,
+      "gemini_halluc": 1
+    },
+    {
+      "id": "E46",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8,
+      "gemini_f1": 0.7273,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E47",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.3333,
+      "gemini_f1": 0.5,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E48",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8,
+      "gemini_f1": 0.8,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E49",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.2,
+      "claude_halluc": 1,
+      "gemini_halluc": 1
+    },
+    {
+      "id": "E50",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E51",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.7273,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E52",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.7273,
+      "gemini_f1": 0.8889,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E53",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.7778,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E54",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8571,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E55",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.6667,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E56",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.2857,
+      "gemini_f1": 0.3077,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E57",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8333,
+      "gemini_f1": 0.8333,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E58",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.7143,
+      "gemini_f1": 0.7143,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E59",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8,
+      "gemini_f1": 0.8,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E60",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8,
+      "gemini_f1": 0.8,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E61",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.75,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E62",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.75,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E63",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.75,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E64",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8571,
+      "gemini_f1": 0.75,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E65",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8889,
+      "gemini_f1": 0.8889,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E66",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.5,
+      "gemini_f1": 0.5,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E67",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8571,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E68",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.6667,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E69",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E70",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E72",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.0,
+      "gemini_f1": 0.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E73",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 1.0,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E74",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.4615,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E75",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.6667,
+      "gemini_f1": 1.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E76",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.8889,
+      "gemini_f1": 0.8571,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E77",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.6667,
+      "gemini_f1": 0.75,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E78",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.4444,
+      "gemini_f1": 0.5,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E79",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.0,
+      "gemini_f1": 0.0,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E80",
+      "phase": "entity",
+      "difficulty": "hard",
+      "claude_f1": 0.5455,
+      "gemini_f1": 0.75,
+      "claude_halluc": 0,
+      "gemini_halluc": 0
+    },
+    {
+      "id": "E01",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E02",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E03",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E04",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E05",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E06",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E07",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E09",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E10",
+      "phase": "relationship",
+      "difficulty": "easy",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E11",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E12",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E13",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E14",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E16",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E17",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E18",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 0.5,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E19",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E20",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E21",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 0.5
+    },
+    {
+      "id": "E22",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E23",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E24",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 0.5,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E25",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E26",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E27",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E28",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E29",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E30",
+      "phase": "relationship",
+      "difficulty": "medium",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E31",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E32",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E33",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E34",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E35",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E36",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E37",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E38",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.5,
+      "gemini_score": 0.5
+    },
+    {
+      "id": "E39",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E40",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.5,
+      "gemini_score": 0.5
+    },
+    {
+      "id": "E42",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E51",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E52",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E53",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E54",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.5,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E55",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E56",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E57",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.3333,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E58",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E59",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E60",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E61",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E62",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E63",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E64",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 0.5
+    },
+    {
+      "id": "E67",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E69",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "E70",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E75",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E76",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 0.0,
+      "gemini_score": 0.0
+    },
+    {
+      "id": "E80",
+      "phase": "relationship",
+      "difficulty": "hard",
+      "claude_score": 1.0,
+      "gemini_score": 1.0
+    },
+    {
+      "id": "C01",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C02",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C03",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C04",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C05",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C06",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C07",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C08",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C09",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C10",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "direct",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C11",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C12",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C13",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C14",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "delete",
+      "expected": "noop"
+    },
+    {
+      "id": "C15",
+      "phase": "contradiction",
+      "difficulty": "easy",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "add",
+      "expected": "noop"
+    },
+    {
+      "id": "C16",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "delete",
+      "expected": "noop"
+    },
+    {
+      "id": "C17",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "delete",
+      "expected": "noop"
+    },
+    {
+      "id": "C18",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "add",
+      "expected": "noop"
+    },
+    {
+      "id": "C19",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "delete",
+      "expected": "noop"
+    },
+    {
+      "id": "C20",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C21",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "add",
+      "expected": "noop"
+    },
+    {
+      "id": "C22",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "add",
+      "expected": "noop"
+    },
+    {
+      "id": "C23",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "delete",
+      "expected": "noop"
+    },
+    {
+      "id": "C24",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C25",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "noop_additive",
+      "claude_correct": true,
+      "gemini_correct": false,
+      "claude_action": "noop",
+      "gemini_action": "delete",
+      "expected": "noop"
+    },
+    {
+      "id": "C26",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "noop_unrelated",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C27",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "noop_unrelated",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C28",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "noop_unrelated",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C29",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "noop_unrelated",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C30",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "noop_unrelated",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "noop",
+      "gemini_action": "noop",
+      "expected": "noop"
+    },
+    {
+      "id": "C31",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C32",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C33",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C34",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C35",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C36",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C37",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C38",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C39",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C40",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "subtle",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C41",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C42",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C43",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C44",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C45",
+      "phase": "contradiction",
+      "difficulty": "medium",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C46",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C47",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C48",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C49",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    },
+    {
+      "id": "C50",
+      "phase": "contradiction",
+      "difficulty": "hard",
+      "category": "temporal",
+      "claude_correct": true,
+      "gemini_correct": true,
+      "claude_action": "delete",
+      "gemini_action": "delete",
+      "expected": "delete"
+    }
+  ]
+}

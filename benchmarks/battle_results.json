@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-02-15T15:12:49",
+  "models": {
+    "claude": "claude-opus-4-6",
+    "gemini": "gemini-2.5-flash-lite"
+  },
+  "token_usage": {
+    "claude": {
+      "input": 92216,
+      "output": 9724
+    },
+    "gemini": {
+      "input": 32184,
+      "output": 7018
+    }
+  },
+  "estimated_cost": {
+    "claude": 2.11254,
+    "gemini": 0.004519199999999999
+  },
+  "avg_latency": {
+    "claude": 2.4326988147652666,
+    "gemini": 0.5832091673560764
+  },
+  "dimension_scores": {
+    "D1: Entity Extraction": {
+      "claude": 0.8126923076923076,
+      "gemini": 0.8829743589743589
+    },
+    "D2: Relationship Quality": {
+      "claude": 0.803030303030303,
+      "gemini": 0.6666666666666666
+    },
+    "D3: Contradiction Detection": {
+      "claude": 1.0,
+      "gemini": 0.8
+    },
+    "D4: Tool Reliability": {
+      "claude": 1.0,
+      "gemini": 1.0
+    },
+    "D5: Schema Adherence": {
+      "claude": 1.0,
+      "gemini": 1.0
+    },
+    "D6: Hallucination Resistance": {
+      "claude": 0.9512108262108262,
+      "gemini": 0.9711538461538461
+    }
+  }
+}
