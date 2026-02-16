@@ -32,6 +32,9 @@ Thumbs.db
 # Credentials
 .credentials.json
 
+# MCP config (contains personal IPs, API keys)
+.mcp.json
+
 # Local development tooling
 .claude/
 openspec/
