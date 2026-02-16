@@ -1,5 +1,6 @@
 """Shared utilities for mem0-mcp-selfhosted.
 
+- patch_graph_sanitizer(): Monkey-patches mem0ai's relationship sanitizer for Neo4j compliance
 - _mem0_call(): Error wrapper for all mem0ai calls
 - call_with_graph(): Concurrency-safe enable_graph toggle
 - safe_bulk_delete(): Iterate + individual delete (never memory.delete_all())
@@ -12,10 +13,86 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import threading
 from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
+
+# Valid Neo4j relationship type: must start with a letter or underscore,
+# followed by letters, digits, or underscores.
+_NEO4J_VALID_TYPE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+def _make_enhanced_sanitizer(original_fn: Callable[[str], str]) -> Callable[[str], str]:
+    """Wrap mem0ai's sanitize_relationship_for_cypher with Neo4j compliance fixes.
+
+    Fixes two gaps in the upstream sanitizer:
+    1. Hyphens and other ASCII characters not in the char_map
+    2. Leading digits (Neo4j types must start with a letter or underscore)
+
+    The wrapper calls the original first (preserving its 26+ special character
+    mappings), then applies additional fixes.
+    """
+
+    def enhanced(relationship: str) -> str:
+        # Run the original sanitizer first
+        sanitized = original_fn(relationship)
+
+        # Fix: replace hyphens (not in upstream char_map) with underscores
+        sanitized = sanitized.replace("-", "_")
+
+        # Fix: strip any remaining non-alphanumeric/underscore characters
+        sanitized = re.sub(r"[^a-zA-Z0-9_]", "_", sanitized)
+
+        # Collapse consecutive underscores and strip edges
+        sanitized = re.sub(r"_+", "_", sanitized).strip("_")
+
+        # Fix: leading digit → prepend 'rel_' prefix
+        if sanitized and sanitized[0].isdigit():
+            sanitized = "rel_" + sanitized
+
+        # Fallback for empty result
+        if not sanitized:
+            sanitized = "related_to"
+
+        return sanitized
+
+    return enhanced
+
+
+def patch_graph_sanitizer() -> None:
+    """Monkey-patch mem0ai's relationship sanitizer for full Neo4j compliance.
+
+    Must be called AFTER mem0 modules are imported but BEFORE Memory.from_config().
+    Patches both the utils module and the already-imported references in
+    graph_memory/memgraph_memory.
+    """
+    import mem0.memory.utils as utils_module
+
+    original = utils_module.sanitize_relationship_for_cypher
+    enhanced = _make_enhanced_sanitizer(original)
+
+    # Patch the source module
+    utils_module.sanitize_relationship_for_cypher = enhanced
+
+    # Patch already-imported references (from ... import creates local bindings)
+    try:
+        import mem0.memory.graph_memory as graph_module
+
+        graph_module.sanitize_relationship_for_cypher = enhanced
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        import mem0.memory.memgraph_memory as memgraph_module
+
+        memgraph_module.sanitize_relationship_for_cypher = enhanced
+    except (ImportError, AttributeError):
+        pass
+
+    logger.info("Patched mem0ai relationship sanitizer for Neo4j compliance")
+
 
 # Serializes enable_graph mutation + full Memory method execution.
 # Lock hold time is 2-20 seconds (see PRD §2.4).

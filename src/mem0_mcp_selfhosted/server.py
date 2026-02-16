@@ -23,6 +23,7 @@ from mem0_mcp_selfhosted.helpers import (
     call_with_graph,
     get_default_user_id,
     list_entities_facet,
+    patch_graph_sanitizer,
     safe_bulk_delete,
 )
 
@@ -49,6 +50,9 @@ def _init_memory() -> Any:
         class_path=provider_info["class_path"],
         config_class=AnthropicOATConfig,
     )
+
+    # Patch mem0ai's relationship sanitizer before Memory init
+    patch_graph_sanitizer()
 
     # Initialize Memory
     from mem0 import Memory

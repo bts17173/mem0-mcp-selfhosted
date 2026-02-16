@@ -1,4 +1,4 @@
-"""Tests for helpers.py — error wrapper, call_with_graph, bulk delete, user_id."""
+"""Tests for helpers.py — error wrapper, call_with_graph, bulk delete, user_id, sanitizer."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from mem0_mcp_selfhosted.helpers import (
+    _make_enhanced_sanitizer,
     _mem0_call,
     call_with_graph,
     get_default_user_id,
@@ -155,3 +156,108 @@ class TestGetDefaultUserId:
     def test_custom(self, monkeypatch):
         monkeypatch.setenv("MEM0_USER_ID", "bob")
         assert get_default_user_id() == "bob"
+
+
+class TestEnhancedSanitizer:
+    """Tests for the enhanced relationship name sanitizer."""
+
+    @pytest.fixture()
+    def sanitize(self):
+        """Create enhanced sanitizer wrapping a passthrough original."""
+        # Simulate mem0ai's original: returns input unchanged (our tests
+        # focus on what the wrapper adds, not on the original's char_map).
+        return _make_enhanced_sanitizer(lambda r: r)
+
+    def test_leading_digit_gets_prefix(self, sanitize):
+        """Neo4j types can't start with digits — should get rel_ prefix."""
+        assert sanitize("3tier_fallback") == "rel_3tier_fallback"
+
+    def test_leading_digit_with_hyphen(self, sanitize):
+        """The exact error case: '3-tier_oat_token_fallback'."""
+        result = sanitize("3-tier_oat_token_fallback")
+        assert result == "rel_3_tier_oat_token_fallback"
+        assert result[0].isalpha()
+
+    def test_hyphens_replaced(self, sanitize):
+        """Hyphens should become underscores."""
+        assert sanitize("has-authored") == "has_authored"
+
+    def test_multiple_hyphens(self, sanitize):
+        """Multiple hyphens in a row collapse to single underscore."""
+        assert sanitize("is--related--to") == "is_related_to"
+
+    def test_spaces_replaced(self, sanitize):
+        """Spaces should become underscores."""
+        assert sanitize("author of") == "author_of"
+
+    def test_mixed_special_chars(self, sanitize):
+        """Mix of problematic characters."""
+        assert sanitize("has.authored-by!user") == "has_authored_by_user"
+
+    def test_already_valid(self, sanitize):
+        """Valid relationship type passes through unchanged."""
+        assert sanitize("WORKS_FOR") == "WORKS_FOR"
+
+    def test_already_valid_lowercase(self, sanitize):
+        """Valid lowercase type passes through unchanged."""
+        assert sanitize("prefers") == "prefers"
+
+    def test_empty_string_fallback(self, sanitize):
+        """Empty string gets fallback name."""
+        assert sanitize("") == "related_to"
+
+    def test_only_special_chars_fallback(self, sanitize):
+        """String of only special chars gets fallback name."""
+        assert sanitize("---") == "related_to"
+
+    def test_consecutive_underscores_collapsed(self, sanitize):
+        """Multiple underscores collapse to one."""
+        assert sanitize("foo___bar") == "foo_bar"
+
+    def test_leading_trailing_underscores_stripped(self, sanitize):
+        """Leading/trailing underscores are stripped."""
+        assert sanitize("_foo_bar_") == "foo_bar"
+
+    def test_pure_digits(self, sanitize):
+        """Pure numeric string gets prefix."""
+        assert sanitize("123") == "rel_123"
+
+    def test_unicode_stripped(self, sanitize):
+        """Non-ASCII characters become underscores then get collapsed/stripped."""
+        result = sanitize("関係_type")
+        # 関係 → __ → stripped, leaving just "type"
+        assert result == "type"
+
+    def test_wraps_original_function(self):
+        """Enhanced sanitizer calls the original function first."""
+        call_log = []
+
+        def mock_original(r):
+            call_log.append(r)
+            return r.replace("&", "_ampersand_")
+
+        enhanced = _make_enhanced_sanitizer(mock_original)
+        result = enhanced("has&uses")
+        assert call_log == ["has&uses"]
+        assert result == "has_ampersand_uses"
+
+    def test_valid_neo4j_pattern(self, sanitize):
+        """All outputs must match Neo4j's identifier pattern."""
+        import re
+
+        pattern = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+        test_cases = [
+            "3-tier_oat_token_fallback",
+            "has-authored",
+            "is professor of",
+            "123",
+            "---",
+            "",
+            "WORKS_FOR",
+            "has.dot.notation",
+            "with spaces and-hyphens",
+            "5th_element",
+        ]
+        for case in test_cases:
+            result = sanitize(case)
+            assert pattern.match(result), f"'{case}' → '{result}' is not a valid Neo4j type"
