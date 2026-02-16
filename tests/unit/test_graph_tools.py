@@ -69,6 +69,76 @@ class TestSearchGraph:
         assert "Alice --[PREFERS]--> TypeScript" in result["entities"][0]["relationship"]
 
 
+    def _make_mock_driver(self, records):
+        """Create a mock Neo4j driver returning the given records."""
+        mock_session = MagicMock()
+        mock_records = []
+        for rec in records:
+            mock_record = MagicMock()
+            mock_record.data.return_value = rec
+            mock_records.append(mock_record)
+        mock_session.run.return_value = mock_records
+        mock_session.__enter__ = MagicMock(return_value=mock_session)
+        mock_session.__exit__ = MagicMock(return_value=False)
+        mock_driver = MagicMock()
+        mock_driver.session.return_value = mock_session
+        return mock_driver, mock_session
+
+    def test_wildcard_asterisk_lists_all(self):
+        """Asterisk query skips WHERE clause and lists all entities."""
+        mock_driver, mock_session = self._make_mock_driver([
+            {"entity": "Alice", "labels": ["Person"], "relationship": None, "related_entity": None},
+            {"entity": "Bob", "labels": ["Person"], "relationship": None, "related_entity": None},
+        ])
+        gt._driver = mock_driver
+        with patch.dict("os.environ", {}, clear=False):
+            result = json.loads(gt.search_graph("*"))
+
+        assert "entities" in result
+        assert len(result["entities"]) == 2
+        # Verify the Cypher query does NOT contain WHERE/CONTAINS
+        cypher_arg = mock_session.run.call_args[0][0]
+        assert "CONTAINS" not in cypher_arg
+        assert "WHERE" not in cypher_arg
+
+    def test_empty_string_lists_all(self):
+        """Empty query skips WHERE clause and lists all entities."""
+        mock_driver, mock_session = self._make_mock_driver([
+            {"entity": "Alice", "labels": ["Person"], "relationship": None, "related_entity": None},
+        ])
+        gt._driver = mock_driver
+        with patch.dict("os.environ", {}, clear=False):
+            result = json.loads(gt.search_graph(""))
+
+        assert "entities" in result
+        cypher_arg = mock_session.run.call_args[0][0]
+        assert "CONTAINS" not in cypher_arg
+
+    def test_whitespace_only_lists_all(self):
+        """Whitespace-only query treated as list-all."""
+        mock_driver, mock_session = self._make_mock_driver([])
+        gt._driver = mock_driver
+        with patch.dict("os.environ", {}, clear=False):
+            result = json.loads(gt.search_graph("   "))
+
+        assert "entities" in result
+        cypher_arg = mock_session.run.call_args[0][0]
+        assert "CONTAINS" not in cypher_arg
+
+    def test_regular_query_uses_contains(self):
+        """Non-wildcard queries still use CONTAINS substring matching."""
+        mock_driver, mock_session = self._make_mock_driver([])
+        gt._driver = mock_driver
+        with patch.dict("os.environ", {}, clear=False):
+            gt.search_graph("Alice")
+
+        cypher_arg = mock_session.run.call_args[0][0]
+        assert "CONTAINS" in cypher_arg
+        # Verify the search term parameter was passed
+        params_arg = mock_session.run.call_args[0][1]
+        assert params_arg == {"search_term": "Alice"}
+
+
 class TestGetEntity:
     def test_entity_not_found_returns_empty(self):
         """Returns empty result set (not error) when entity not found."""

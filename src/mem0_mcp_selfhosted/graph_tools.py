@@ -58,21 +58,35 @@ def _run_query(query: str, params: dict[str, Any] | None = None) -> list[dict]:
 def search_graph(query: str) -> str:
     """Search entities by name substring in Neo4j.
 
-    Returns matching entities and their outgoing relationships,
-    formatted as 'source --[relationship]--> target', limited to 25.
+    Returns matching entities and their outgoing relationships.
+    Pass '*' or empty string to list all entities (up to 100).
+    Regular queries use substring matching (up to 25 results).
     """
     try:
-        cypher = """
-        MATCH (n)
-        WHERE toLower(n.name) CONTAINS toLower($search_term)
-        OPTIONAL MATCH (n)-[r]->(m)
-        RETURN n.name AS entity,
-               labels(n) AS labels,
-               type(r) AS relationship,
-               m.name AS related_entity
-        LIMIT 25
-        """
-        records = _run_query(cypher, {"search_term": query})
+        list_all = query.strip() in ("*", "")
+        if list_all:
+            cypher = """
+            MATCH (n)
+            OPTIONAL MATCH (n)-[r]->(m)
+            RETURN n.name AS entity,
+                   labels(n) AS labels,
+                   type(r) AS relationship,
+                   m.name AS related_entity
+            LIMIT 100
+            """
+            records = _run_query(cypher)
+        else:
+            cypher = """
+            MATCH (n)
+            WHERE toLower(n.name) CONTAINS toLower($search_term)
+            OPTIONAL MATCH (n)-[r]->(m)
+            RETURN n.name AS entity,
+                   labels(n) AS labels,
+                   type(r) AS relationship,
+                   m.name AS related_entity
+            LIMIT 25
+            """
+            records = _run_query(cypher, {"search_term": query})
 
         entities: list[dict[str, Any]] = []
         for record in records:
