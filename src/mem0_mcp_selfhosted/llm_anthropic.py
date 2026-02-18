@@ -139,8 +139,16 @@ class AnthropicOATLLM(LLMBase):
 
         # Resolve token: config field → fallback chain
         token = self.config.auth_token or self.config.api_key or resolve_token()
+        self._build_client(token)
 
-        # Build client kwargs based on token type
+    def _build_client(self, token: str | None) -> None:
+        """Build (or rebuild) the Anthropic client from a token.
+
+        Handles OAT vs API key auth, OAT identity headers, base URL config.
+        Updates self._current_token and self.client.
+        """
+        self._current_token = token
+
         client_kwargs: dict[str, Any] = {}
         if self.config.anthropic_base_url:
             client_kwargs["base_url"] = self.config.anthropic_base_url
@@ -155,6 +163,49 @@ class AnthropicOATLLM(LLMBase):
             client_kwargs["api_key"] = token
 
         self.client = anthropic.Anthropic(**client_kwargs)
+
+    def _call_api(self, params: dict) -> anthropic.types.Message:
+        """Call the Anthropic API with auth retry for OAT tokens.
+
+        Wraps self.client.messages.create(**params) with:
+        - Truncation warning logging
+        - Auth retry: on AuthenticationError with OAT token, re-read credentials,
+          rebuild client if token changed, retry once
+        """
+        try:
+            response = self.client.messages.create(**params)
+        except anthropic.AuthenticationError:
+            if not is_oat_token(self._current_token):
+                raise
+
+            new_token = resolve_token()
+
+            if new_token is None:
+                logger.warning(
+                    "[mem0] OAT token expired but no token available from credentials"
+                    " — not retrying"
+                )
+                raise
+
+            if new_token == self._current_token:
+                logger.warning(
+                    "[mem0] OAT token expired but credentials file has same token"
+                    " — not retrying"
+                )
+                raise
+
+            logger.info(
+                "[mem0] OAT token expired, refreshed from credentials file and retrying"
+            )
+            self._build_client(new_token)
+            response = self.client.messages.create(**params)
+
+        if response.stop_reason == "max_tokens":
+            logger.warning(
+                "[mem0] Anthropic response truncated for model %s", self.config.model
+            )
+
+        return response
 
     def _supports_structured_output(self) -> bool:
         """Check if the configured model supports structured outputs."""
@@ -258,14 +309,7 @@ class AnthropicOATLLM(LLMBase):
                 else:
                     params["tool_choice"] = tool_choice
 
-            response = self.client.messages.create(**params)
-
-            # Truncation detection
-            if response.stop_reason == "max_tokens":
-                logger.warning(
-                    "[mem0] Anthropic response truncated for model %s", self.config.model
-                )
-
+            response = self._call_api(params)
             return self._parse_response(response)
 
         # Path 1: Structured output (response_format, no tools)
@@ -280,22 +324,10 @@ class AnthropicOATLLM(LLMBase):
                 }
             # else: no output_config — rely on extractJson fallback
 
-            response = self.client.messages.create(**params)
-
-            if response.stop_reason == "max_tokens":
-                logger.warning(
-                    "[mem0] Anthropic response truncated for model %s", self.config.model
-                )
-
+            response = self._call_api(params)
             text = response.content[0].text
             return extract_json(text)
 
         # Plain text response (no tools, no response_format)
-        response = self.client.messages.create(**params)
-
-        if response.stop_reason == "max_tokens":
-            logger.warning(
-                "[mem0] Anthropic response truncated for model %s", self.config.model
-            )
-
+        response = self._call_api(params)
         return response.content[0].text

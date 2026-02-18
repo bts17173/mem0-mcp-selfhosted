@@ -1,14 +1,17 @@
-"""Tests for llm_anthropic.py — parse_response, schema detection, extract_json."""
+"""Tests for llm_anthropic.py — parse_response, schema detection, extract_json, token refresh."""
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import anthropic
+import httpx
 import pytest
 
 from mem0_mcp_selfhosted.llm_anthropic import (
     FACT_RETRIEVAL_SCHEMA,
     MEMORY_UPDATE_SCHEMA,
+    OAT_HEADERS,
     AnthropicOATLLM,
     extract_json,
 )
@@ -119,3 +122,188 @@ class TestSchemaDetection:
         ]
         result = AnthropicOATLLM._select_schema(llm, messages)
         assert result == MEMORY_UPDATE_SCHEMA
+
+
+# --- Helpers for token refresh tests ---
+
+OAT_TOKEN = "sk-ant-oat01-test-token-old"
+OAT_TOKEN_NEW = "sk-ant-oat01-test-token-new"
+API_KEY = "sk-ant-api03-test-key"
+
+
+def _make_auth_error():
+    """Create an anthropic.AuthenticationError with minimal mocks."""
+    mock_response = MagicMock(spec=httpx.Response)
+    mock_response.status_code = 401
+    mock_response.headers = httpx.Headers({})
+    mock_response.is_closed = True
+    mock_response.is_stream_consumed = True
+    return anthropic.AuthenticationError(
+        message="authentication_error", response=mock_response, body=None
+    )
+
+
+def _make_rate_limit_error():
+    """Create an anthropic.RateLimitError with minimal mocks."""
+    mock_response = MagicMock(spec=httpx.Response)
+    mock_response.status_code = 429
+    mock_response.headers = httpx.Headers({"retry-after": "1"})
+    mock_response.is_closed = True
+    mock_response.is_stream_consumed = True
+    return anthropic.RateLimitError(
+        message="rate_limit_error", response=mock_response, body=None
+    )
+
+
+def _make_api_response(text="ok", stop_reason="end_turn"):
+    """Create a mock anthropic.types.Message."""
+    text_block = MagicMock()
+    text_block.type = "text"
+    text_block.text = text
+    response = MagicMock()
+    response.content = [text_block]
+    response.stop_reason = stop_reason
+    return response
+
+
+def _make_llm(token=OAT_TOKEN):
+    """Create an AnthropicOATLLM with mocked internals (no real API client)."""
+    with patch("mem0_mcp_selfhosted.llm_anthropic.resolve_token", return_value=token):
+        with patch("anthropic.Anthropic"):
+            from mem0_mcp_selfhosted.llm_anthropic import AnthropicOATConfig
+
+            config = AnthropicOATConfig(model="claude-sonnet-4-20250514", auth_token=token)
+            llm = AnthropicOATLLM(config=config)
+    return llm
+
+
+class TestCallApiTokenRefresh:
+    """Tests for _call_api auth retry logic."""
+
+    def test_retry_succeeds_with_new_token(self):
+        """4.1: _call_api retries when resolve_token returns a different token."""
+        llm = _make_llm(OAT_TOKEN)
+        success_response = _make_api_response("retried ok")
+
+        llm.client.messages.create = MagicMock(
+            side_effect=[_make_auth_error(), success_response]
+        )
+
+        with patch(
+            "mem0_mcp_selfhosted.llm_anthropic.resolve_token", return_value=OAT_TOKEN_NEW
+        ):
+            with patch.object(llm, "_build_client") as mock_build:
+                result = llm._call_api({"model": "test"})
+
+        mock_build.assert_called_once_with(OAT_TOKEN_NEW)
+        assert result is success_response
+
+    def test_no_retry_when_token_unchanged(self):
+        """4.2: _call_api does NOT retry when token is the same."""
+        llm = _make_llm(OAT_TOKEN)
+        llm.client.messages.create = MagicMock(side_effect=_make_auth_error())
+
+        with patch(
+            "mem0_mcp_selfhosted.llm_anthropic.resolve_token", return_value=OAT_TOKEN
+        ):
+            with pytest.raises(anthropic.AuthenticationError):
+                llm._call_api({"model": "test"})
+
+        # Only one call — no retry
+        assert llm.client.messages.create.call_count == 1
+
+    def test_no_retry_when_resolve_returns_none(self):
+        """4.3: _call_api does NOT retry when resolve_token returns None."""
+        llm = _make_llm(OAT_TOKEN)
+        llm.client.messages.create = MagicMock(side_effect=_make_auth_error())
+
+        with patch(
+            "mem0_mcp_selfhosted.llm_anthropic.resolve_token", return_value=None
+        ):
+            with pytest.raises(anthropic.AuthenticationError):
+                llm._call_api({"model": "test"})
+
+        assert llm.client.messages.create.call_count == 1
+
+    def test_no_retry_for_non_oat_token(self):
+        """4.4: _call_api does NOT retry for standard API keys."""
+        llm = _make_llm(API_KEY)
+        llm.client.messages.create = MagicMock(side_effect=_make_auth_error())
+
+        with patch(
+            "mem0_mcp_selfhosted.llm_anthropic.resolve_token"
+        ) as mock_resolve:
+            with pytest.raises(anthropic.AuthenticationError):
+                llm._call_api({"model": "test"})
+
+        # resolve_token should never be called for non-OAT tokens
+        mock_resolve.assert_not_called()
+        assert llm.client.messages.create.call_count == 1
+
+    def test_non_auth_error_propagates(self):
+        """4.5: _call_api does NOT catch non-auth errors like RateLimitError."""
+        llm = _make_llm(OAT_TOKEN)
+        llm.client.messages.create = MagicMock(side_effect=_make_rate_limit_error())
+
+        with patch(
+            "mem0_mcp_selfhosted.llm_anthropic.resolve_token"
+        ) as mock_resolve:
+            with pytest.raises(anthropic.RateLimitError):
+                llm._call_api({"model": "test"})
+
+        mock_resolve.assert_not_called()
+
+    def test_no_infinite_retry_loops(self):
+        """4.6: Only one retry — if retry also fails with AuthError, it propagates."""
+        llm = _make_llm(OAT_TOKEN)
+        llm.client.messages.create = MagicMock(
+            side_effect=[_make_auth_error(), _make_auth_error()]
+        )
+
+        with patch(
+            "mem0_mcp_selfhosted.llm_anthropic.resolve_token", return_value=OAT_TOKEN_NEW
+        ):
+            with patch.object(llm, "_build_client"):
+                with pytest.raises(anthropic.AuthenticationError):
+                    llm._call_api({"model": "test"})
+
+        # Exactly 2 calls: original + one retry
+        assert llm.client.messages.create.call_count == 2
+
+
+class TestBuildClient:
+    """Tests for _build_client client construction."""
+
+    def test_oat_token_uses_auth_token_and_headers(self):
+        """4.7: OAT token → auth_token kwarg + OAT headers."""
+        llm = _make_llm(OAT_TOKEN)
+
+        with patch("anthropic.Anthropic") as mock_cls:
+            llm._build_client(OAT_TOKEN)
+
+        call_kwargs = mock_cls.call_args[1]
+        assert call_kwargs["auth_token"] == OAT_TOKEN
+        assert call_kwargs["default_headers"] == OAT_HEADERS
+        assert "api_key" not in call_kwargs
+
+    def test_api_key_uses_api_key_no_headers(self):
+        """4.8: Standard API key → api_key kwarg, no OAT headers."""
+        llm = _make_llm(API_KEY)
+
+        with patch("anthropic.Anthropic") as mock_cls:
+            llm._build_client(API_KEY)
+
+        call_kwargs = mock_cls.call_args[1]
+        assert call_kwargs["api_key"] == API_KEY
+        assert "auth_token" not in call_kwargs
+        assert "default_headers" not in call_kwargs
+
+    def test_current_token_updated(self):
+        """4.9: _current_token is updated after _build_client."""
+        llm = _make_llm(OAT_TOKEN)
+        assert llm._current_token == OAT_TOKEN
+
+        with patch("anthropic.Anthropic"):
+            llm._build_client(OAT_TOKEN_NEW)
+
+        assert llm._current_token == OAT_TOKEN_NEW
