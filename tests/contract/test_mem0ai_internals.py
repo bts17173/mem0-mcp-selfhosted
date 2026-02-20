@@ -52,6 +52,19 @@ class TestVectorStoreClientAccess:
         )
 
 
+class TestMcpSdkImports:
+    """Test MCP SDK import paths remain stable."""
+
+    def test_mcp_client_session_importable(self):
+        """ClientSession import path remains valid across MCP SDK versions."""
+        try:
+            from mcp.client.session import ClientSession
+        except ImportError:
+            pytest.skip("mcp SDK not installed")
+
+        assert ClientSession  # Import succeeded — contract satisfied
+
+
 class TestLlmFactoryRegistration:
     """Test LlmFactory.register_provider() behavior."""
 
@@ -106,3 +119,61 @@ class TestLlmFactoryRegistration:
             assert "test_persist" in provider_map, (
                 "INVARIANT BROKEN: Registered provider must persist in LlmFactory."
             )
+
+
+class TestOllamaLLMInterface:
+    """Validate upstream OllamaLLM interface our subclass depends on."""
+
+    def test_ollama_llm_has_parse_response(self):
+        """OllamaLLM has _parse_response method we override."""
+        try:
+            from mem0.llms.ollama import OllamaLLM
+        except ImportError:
+            pytest.skip("mem0ai not installed")
+
+        assert hasattr(OllamaLLM, "_parse_response"), (
+            "INVARIANT BROKEN: OllamaLLM must have _parse_response method. "
+            "Our OllamaToolLLM subclass overrides it."
+        )
+
+    def test_ollama_llm_has_generate_response(self):
+        """OllamaLLM has generate_response method we override."""
+        try:
+            from mem0.llms.ollama import OllamaLLM
+        except ImportError:
+            pytest.skip("mem0ai not installed")
+
+        assert hasattr(OllamaLLM, "generate_response"), (
+            "INVARIANT BROKEN: OllamaLLM must have generate_response method. "
+            "Our OllamaToolLLM subclass overrides it."
+        )
+
+    def test_ollama_config_has_base_url(self):
+        """OllamaConfig accepts ollama_base_url parameter."""
+        try:
+            from mem0.configs.llms.ollama import OllamaConfig
+        except ImportError:
+            pytest.skip("mem0ai not installed")
+
+        # Verify __init__ accepts ollama_base_url and stores it
+        cfg = OllamaConfig(ollama_base_url="http://test:11434")
+        assert cfg.ollama_base_url == "http://test:11434", (
+            "INVARIANT BROKEN: OllamaConfig must accept and store ollama_base_url. "
+            "Our config.py passes this field to Ollama LLM config."
+        )
+
+    def test_ollama_llm_init_accepts_config(self):
+        """OllamaLLM.__init__ accepts a 'config' parameter by name."""
+        try:
+            from mem0.llms.ollama import OllamaLLM
+        except ImportError:
+            pytest.skip("mem0ai not installed")
+
+        import inspect
+
+        sig = inspect.signature(OllamaLLM.__init__)
+        params = list(sig.parameters.keys())
+        assert "config" in params, (
+            "INVARIANT BROKEN: OllamaLLM.__init__ must accept a 'config' parameter. "
+            f"Our OllamaToolLLM inherits __init__ from it. Found params: {params}"
+        )

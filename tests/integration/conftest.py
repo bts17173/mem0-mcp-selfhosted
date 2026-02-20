@@ -1,7 +1,7 @@
 """Integration test fixtures — skip gracefully when infrastructure is unavailable.
 
 Fixture hierarchy:
-    qdrant_url (session)  +  ollama_url (session)  +  anthropic_token (session)
+    qdrant_url (session)  +  ollama_url (session)
                           ↓
                   memory_instance (session)  ←  uses mem0_integration_test collection
                           ↓                      drops collection in teardown
@@ -14,10 +14,25 @@ from __future__ import annotations
 
 import os
 import socket
-import urllib.request
 import urllib.error
+import urllib.request
 
 import pytest
+
+
+def _load_dotenv_once() -> None:
+    """Load .env for integration tests only.
+
+    Unit tests use monkeypatch/patch.dict and must not be affected by a
+    developer's local .env file.  Shell env vars take precedence
+    (python-dotenv's default ``override=False``).
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
+
+_load_dotenv_once()
 
 # Mark all integration tests
 pytestmark = pytest.mark.integration
@@ -45,17 +60,6 @@ def ollama_url():
     except Exception:
         pytest.skip(f"Ollama not reachable at {url}")
     return url
-
-
-@pytest.fixture(scope="session")
-def anthropic_token():
-    """Resolve Anthropic token via the project's auth chain; skip if unavailable."""
-    from mem0_mcp_selfhosted.auth import resolve_token
-
-    token = resolve_token()
-    if not token:
-        pytest.skip("No Anthropic token available")
-    return token
 
 
 @pytest.fixture(scope="session")
@@ -109,12 +113,20 @@ def _is_neo4j_reachable() -> bool:
 
 
 @pytest.fixture(scope="session")
-def memory_instance(qdrant_url, ollama_url, anthropic_token):
+def memory_instance(qdrant_url, ollama_url):
     """Create a real Memory instance against live infrastructure.
 
     Uses a dedicated test collection, dropped entirely in teardown.
     Conditionally enables graph support when Neo4j is reachable.
+    Anthropic token is only required when MEM0_LLM_PROVIDER=anthropic.
     """
+    llm_provider = os.environ.get("MEM0_LLM_PROVIDER", "anthropic")
+    if llm_provider == "anthropic":
+        from mem0_mcp_selfhosted.auth import resolve_token
+
+        token = resolve_token()
+        if not token:
+            pytest.skip("No Anthropic token available (required for MEM0_LLM_PROVIDER=anthropic)")
     # Override collection name for test isolation
     original_collection = os.environ.get("MEM0_COLLECTION")
     original_graph = os.environ.get("MEM0_ENABLE_GRAPH")
@@ -126,17 +138,10 @@ def memory_instance(qdrant_url, ollama_url, anthropic_token):
         os.environ["MEM0_ENABLE_GRAPH"] = "true"
 
     from mem0_mcp_selfhosted.config import build_config
-    from mem0_mcp_selfhosted.llm_anthropic import AnthropicOATConfig
+    from mem0_mcp_selfhosted.server import register_providers
 
-    config_dict, provider_info, split_config = build_config()
-
-    from mem0.utils.factory import LlmFactory
-
-    LlmFactory.register_provider(
-        name=provider_info["name"],
-        class_path=provider_info["class_path"],
-        config_class=AnthropicOATConfig,
-    )
+    config_dict, providers_info, split_config = build_config()
+    register_providers(providers_info)
 
     from mem0 import Memory
 

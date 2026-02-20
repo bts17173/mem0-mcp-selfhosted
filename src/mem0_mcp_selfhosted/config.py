@@ -7,35 +7,54 @@ mem0ai MemoryConfig dict, and returns provider registration info.
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, TypedDict
 
 from mem0_mcp_selfhosted.auth import resolve_token
+
+
+class ProviderInfo(TypedDict):
+    """Custom LLM provider registration info for LlmFactory."""
+
+    name: str
+    class_path: str
 
 
 def _bool_env(key: str, default: str = "false") -> bool:
     return os.environ.get(key, default).lower() in ("true", "1", "yes")
 
 
-def build_config() -> tuple[dict[str, Any], dict[str, str], dict[str, Any] | None]:
+def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] | None]:
     """Build mem0ai MemoryConfig dict and provider registration info.
 
     Returns:
-        (config_dict, provider_info, split_config) where:
-        - provider_info: primary provider dict with name, class_path, config_class_path
+        (config_dict, providers_info, split_config) where:
+        - providers_info: list of ProviderInfo dicts (name + class_path)
         - split_config: if gemini_split was requested, config for the SplitModelGraphLLM
     """
     token = resolve_token()
 
     # --- LLM ---
-    llm_model = os.environ.get("MEM0_LLM_MODEL", "claude-opus-4-6")
+    llm_provider = os.environ.get("MEM0_LLM_PROVIDER", "anthropic")
+    _supported_llm_providers = ("anthropic", "ollama")
+    if llm_provider not in _supported_llm_providers:
+        raise ValueError(
+            f"Unsupported MEM0_LLM_PROVIDER={llm_provider!r}. "
+            f"Supported: {list(_supported_llm_providers)}"
+        )
+
+    _llm_model_defaults = {"anthropic": "claude-opus-4-6", "ollama": "qwen3:14b"}
+    llm_model = os.environ.get("MEM0_LLM_MODEL", _llm_model_defaults[llm_provider])
     llm_max_tokens = int(os.environ.get("MEM0_LLM_MAX_TOKENS", "16384"))
 
-    llm_config: dict[str, Any] = {
-        "model": llm_model,
-        "max_tokens": llm_max_tokens,
-    }
-    if token:
-        llm_config["api_key"] = token
+    llm_config: dict[str, Any] = {"model": llm_model}
+    if llm_provider == "anthropic":
+        llm_config["max_tokens"] = llm_max_tokens
+        if token:
+            llm_config["api_key"] = token
+    elif llm_provider == "ollama":
+        llm_config["ollama_base_url"] = os.environ.get(
+            "MEM0_LLM_URL", "http://localhost:11434"
+        )
 
     # --- Embedder ---
     embed_provider = os.environ.get("MEM0_EMBED_PROVIDER", "ollama")
@@ -71,7 +90,7 @@ def build_config() -> tuple[dict[str, Any], dict[str, str], dict[str, Any] | Non
     # --- Build config dict ---
     config_dict: dict[str, Any] = {
         "llm": {
-            "provider": "anthropic",
+            "provider": llm_provider,
             "config": llm_config,
         },
         "embedder": {
@@ -90,6 +109,7 @@ def build_config() -> tuple[dict[str, Any], dict[str, str], dict[str, Any] | Non
 
     # --- Graph Store (conditional) ---
     enable_graph = _bool_env("MEM0_ENABLE_GRAPH")
+    graph_llm_provider_raw: str | None = None  # set inside block, used for provider registration
     if enable_graph:
         neo4j_url = os.environ.get("MEM0_NEO4J_URL", "bolt://127.0.0.1:7687")
         neo4j_user = os.environ.get("MEM0_NEO4J_USER", "neo4j")
@@ -118,8 +138,11 @@ def build_config() -> tuple[dict[str, Any], dict[str, str], dict[str, Any] | Non
         }
 
         if graph_llm_provider == "ollama":
-            ollama_url = os.environ.get("MEM0_EMBED_URL", "http://localhost:11434")
-            graph_llm_config["ollama_base_url"] = ollama_url
+            graph_llm_url = os.environ.get(
+                "MEM0_GRAPH_LLM_URL",
+                os.environ.get("MEM0_LLM_URL", "http://localhost:11434"),
+            )
+            graph_llm_config["ollama_base_url"] = graph_llm_url
         elif graph_llm_provider in ("anthropic", "anthropic_oat"):
             if token:
                 graph_llm_config["api_key"] = token
@@ -157,11 +180,25 @@ def build_config() -> tuple[dict[str, Any], dict[str, str], dict[str, Any] | Non
         }
 
     # --- Provider registration info ---
-    provider_info = {
-        "name": "anthropic",
-        "class_path": "mem0_mcp_selfhosted.llm_anthropic.AnthropicOATLLM",
-        "config_class_path": "mem0_mcp_selfhosted.llm_anthropic.AnthropicOATConfig",
-    }
+    # Always register custom Ollama provider — strict superset of upstream
+    # OllamaLLM (restores tool-calling removed in mem0ai PR #3241).
+    # Registering even when not used has no side effects.
+    providers_info: list[ProviderInfo] = [
+        {
+            "name": "ollama",
+            "class_path": "mem0_mcp_selfhosted.llm_ollama.OllamaToolLLM",
+        },
+    ]
+    # Register Anthropic when used as main LLM or as graph LLM
+    _needs_anthropic = (
+        llm_provider == "anthropic"
+        or (enable_graph and graph_llm_provider_raw in ("anthropic", "anthropic_oat"))
+    )
+    if _needs_anthropic:
+        providers_info.append({
+            "name": "anthropic",
+            "class_path": "mem0_mcp_selfhosted.llm_anthropic.AnthropicOATLLM",
+        })
 
     # Split-model config: if gemini_split was requested, provide the config
     # for server.py to swap the graph LLM after Memory creation.
@@ -188,7 +225,8 @@ def build_config() -> tuple[dict[str, Any], dict[str, str], dict[str, Any] | Non
             split_config["contradiction_api_key"] = token
         elif contradiction_provider == "ollama":
             split_config["contradiction_ollama_base_url"] = os.environ.get(
-                "MEM0_EMBED_URL", "http://localhost:11434"
+                "MEM0_GRAPH_LLM_URL",
+                os.environ.get("MEM0_LLM_URL", "http://localhost:11434"),
             )
 
-    return config_dict, provider_info, split_config
+    return config_dict, providers_info, split_config

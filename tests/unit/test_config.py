@@ -21,8 +21,8 @@ class TestBuildConfig:
                     patched_env.pop(k, None)
             with patch("mem0_mcp_selfhosted.config.resolve_token", return_value="sk-test-token"):
                 from mem0_mcp_selfhosted.config import build_config
-                config_dict, provider_info, extra_providers = build_config()
-                return config_dict, provider_info, extra_providers
+                config_dict, providers_info, extra_providers = build_config()
+                return config_dict, providers_info, extra_providers
 
     def test_defaults(self):
         """All defaults applied when no env vars set."""
@@ -73,12 +73,18 @@ class TestBuildConfig:
         assert config_dict["embedder"]["provider"] == "ollama"
 
     def test_provider_info_structure(self):
-        """Provider info tuple has the expected structure."""
-        _, provider_info, *_ = self._build_with_env({})
+        """Provider info list includes Anthropic and Ollama entries."""
+        _, providers_info, *_ = self._build_with_env({})
 
-        assert provider_info["name"] == "anthropic"
-        assert "AnthropicOATLLM" in provider_info["class_path"]
-        assert "AnthropicOATConfig" in provider_info["config_class_path"]
+        provider_names = [pi["name"] for pi in providers_info]
+        assert "ollama" in provider_names  # Always registered
+        assert "anthropic" in provider_names
+
+        anthropic_pi = next(pi for pi in providers_info if pi["name"] == "anthropic")
+        assert "AnthropicOATLLM" in anthropic_pi["class_path"]
+
+        ollama_pi = next(pi for pi in providers_info if pi["name"] == "ollama")
+        assert "OllamaToolLLM" in ollama_pi["class_path"]
 
     def test_qdrant_optional_fields(self):
         """Optional Qdrant fields only included when env vars set."""
@@ -192,3 +198,197 @@ class TestBuildConfig:
         env = {"MEM0_ENABLE_GRAPH": "true", "MEM0_GRAPH_LLM_PROVIDER": "gemini"}
         _, _, split_config = self._build_with_env(env)
         assert split_config is None
+
+    # --- Provider selection and config branching (7.x) ---
+
+    def test_default_llm_provider_is_anthropic(self):
+        """Default provider is anthropic when MEM0_LLM_PROVIDER not set."""
+        config_dict, *_ = self._build_with_env({})
+        assert config_dict["llm"]["provider"] == "anthropic"
+
+    def test_ollama_llm_provider(self):
+        """MEM0_LLM_PROVIDER=ollama sets the LLM provider to ollama."""
+        env = {"MEM0_LLM_PROVIDER": "ollama"}
+        config_dict, *_ = self._build_with_env(env)
+        assert config_dict["llm"]["provider"] == "ollama"
+
+    def test_unsupported_llm_provider_raises(self):
+        """Unsupported MEM0_LLM_PROVIDER raises ValueError."""
+        leak_keys = [k for k in os.environ if k.startswith("MEM0_")]
+        env = {"MEM0_LLM_PROVIDER": "gemini"}
+        with patch.dict("os.environ", env, clear=False) as patched_env:
+            for k in leak_keys:
+                if k not in env:
+                    patched_env.pop(k, None)
+            with patch("mem0_mcp_selfhosted.config.resolve_token", return_value="sk-test"):
+                from mem0_mcp_selfhosted.config import build_config
+                with pytest.raises(ValueError, match="Unsupported MEM0_LLM_PROVIDER='gemini'"):
+                    build_config()
+
+    def test_anthropic_config_has_api_key_and_max_tokens(self):
+        """Anthropic LLM config includes api_key and max_tokens."""
+        config_dict, *_ = self._build_with_env({})
+        llm_cfg = config_dict["llm"]["config"]
+        assert llm_cfg["api_key"] == "sk-test-token"
+        assert llm_cfg["max_tokens"] == 16384
+
+    def test_ollama_config_has_base_url_no_api_key(self):
+        """Ollama LLM config includes ollama_base_url, no api_key or max_tokens."""
+        env = {"MEM0_LLM_PROVIDER": "ollama"}
+        config_dict, *_ = self._build_with_env(env)
+        llm_cfg = config_dict["llm"]["config"]
+        assert "ollama_base_url" in llm_cfg
+        assert "api_key" not in llm_cfg
+        assert "max_tokens" not in llm_cfg
+
+    def test_ollama_default_model(self):
+        """Ollama provider defaults to qwen3:14b when MEM0_LLM_MODEL not set."""
+        env = {"MEM0_LLM_PROVIDER": "ollama"}
+        config_dict, *_ = self._build_with_env(env)
+        assert config_dict["llm"]["config"]["model"] == "qwen3:14b"
+
+    def test_ollama_llm_url_custom(self):
+        """MEM0_LLM_URL sets ollama_base_url when provider is ollama."""
+        env = {"MEM0_LLM_PROVIDER": "ollama", "MEM0_LLM_URL": "http://gpu:11434"}
+        config_dict, *_ = self._build_with_env(env)
+        assert config_dict["llm"]["config"]["ollama_base_url"] == "http://gpu:11434"
+
+    def test_ollama_llm_url_default(self):
+        """MEM0_LLM_URL defaults to localhost:11434 when not set."""
+        env = {"MEM0_LLM_PROVIDER": "ollama"}
+        config_dict, *_ = self._build_with_env(env)
+        assert config_dict["llm"]["config"]["ollama_base_url"] == "http://localhost:11434"
+
+    def test_llm_url_not_read_for_anthropic(self):
+        """MEM0_LLM_URL is not included in anthropic config."""
+        env = {"MEM0_LLM_URL": "http://gpu:11434"}
+        config_dict, *_ = self._build_with_env(env)
+        assert "ollama_base_url" not in config_dict["llm"]["config"]
+
+    # --- Conditional provider registration (8.x) ---
+
+    def test_providers_info_includes_anthropic(self):
+        """providers_info includes Anthropic when LLM provider is anthropic."""
+        _, providers_info, _ = self._build_with_env({})
+        provider_names = [pi["name"] for pi in providers_info]
+        assert "anthropic" in provider_names
+        assert "ollama" in provider_names  # Always included
+
+    def test_providers_info_ollama_only(self):
+        """providers_info includes only Ollama when LLM provider is ollama (no graph)."""
+        env = {"MEM0_LLM_PROVIDER": "ollama"}
+        _, providers_info, _ = self._build_with_env(env)
+        provider_names = [pi["name"] for pi in providers_info]
+        assert "ollama" in provider_names
+        assert "anthropic" not in provider_names
+
+    def test_providers_info_ollama_with_anthropic_graph(self):
+        """providers_info includes Anthropic when graph LLM uses anthropic."""
+        env = {
+            "MEM0_LLM_PROVIDER": "ollama",
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "anthropic",
+        }
+        _, providers_info, _ = self._build_with_env(env)
+        provider_names = [pi["name"] for pi in providers_info]
+        assert "ollama" in provider_names
+        assert "anthropic" in provider_names
+
+    # --- URL decoupling: graph LLM (9.x) ---
+
+    def test_graph_llm_url_from_dedicated_env(self):
+        """Graph LLM ollama_base_url reads from MEM0_GRAPH_LLM_URL when set."""
+        env = {
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "ollama",
+            "MEM0_GRAPH_LLM_URL": "http://gpu-box:11434",
+            "MEM0_LLM_URL": "http://main-box:11434",
+        }
+        config_dict, *_ = self._build_with_env(env)
+        graph_url = config_dict["graph_store"]["llm"]["config"]["ollama_base_url"]
+        assert graph_url == "http://gpu-box:11434"
+
+    def test_graph_llm_url_falls_back_to_llm_url(self):
+        """Graph LLM ollama_base_url falls back to MEM0_LLM_URL."""
+        env = {
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "ollama",
+            "MEM0_LLM_URL": "http://main-box:11434",
+        }
+        config_dict, *_ = self._build_with_env(env)
+        graph_url = config_dict["graph_store"]["llm"]["config"]["ollama_base_url"]
+        assert graph_url == "http://main-box:11434"
+
+    def test_graph_llm_url_falls_back_to_default(self):
+        """Graph LLM ollama_base_url falls back to localhost when no URLs set."""
+        env = {
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "ollama",
+        }
+        config_dict, *_ = self._build_with_env(env)
+        graph_url = config_dict["graph_store"]["llm"]["config"]["ollama_base_url"]
+        assert graph_url == "http://localhost:11434"
+
+    def test_graph_llm_url_not_affected_by_embed_url(self):
+        """Changing MEM0_EMBED_URL does NOT affect graph LLM ollama_base_url."""
+        env = {
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "ollama",
+            "MEM0_EMBED_URL": "http://embed-box:11434",
+        }
+        config_dict, *_ = self._build_with_env(env)
+        graph_url = config_dict["graph_store"]["llm"]["config"]["ollama_base_url"]
+        # Should be default, NOT the embed URL
+        assert graph_url == "http://localhost:11434"
+        # Embedder should still use the embed URL
+        assert config_dict["embedder"]["config"]["ollama_base_url"] == "http://embed-box:11434"
+
+    # --- URL decoupling: contradiction LLM (10.x) ---
+
+    def test_contradiction_llm_url_cascade(self):
+        """Contradiction LLM uses cascade: MEM0_GRAPH_LLM_URL -> MEM0_LLM_URL -> default."""
+        # With MEM0_GRAPH_LLM_URL set
+        env = {
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "gemini_split",
+            "GOOGLE_API_KEY": "test-key",
+            "MEM0_GRAPH_CONTRADICTION_LLM_PROVIDER": "ollama",
+            "MEM0_GRAPH_LLM_URL": "http://gpu-box:11434",
+            "MEM0_LLM_URL": "http://main-box:11434",
+        }
+        _, _, split_config = self._build_with_env(env)
+        assert split_config["contradiction_ollama_base_url"] == "http://gpu-box:11434"
+
+        # Falls back to MEM0_LLM_URL
+        env2 = {
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "gemini_split",
+            "GOOGLE_API_KEY": "test-key",
+            "MEM0_GRAPH_CONTRADICTION_LLM_PROVIDER": "ollama",
+            "MEM0_LLM_URL": "http://main-box:11434",
+        }
+        _, _, split_config2 = self._build_with_env(env2)
+        assert split_config2["contradiction_ollama_base_url"] == "http://main-box:11434"
+
+        # Falls back to default
+        env3 = {
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "gemini_split",
+            "GOOGLE_API_KEY": "test-key",
+            "MEM0_GRAPH_CONTRADICTION_LLM_PROVIDER": "ollama",
+        }
+        _, _, split_config3 = self._build_with_env(env3)
+        assert split_config3["contradiction_ollama_base_url"] == "http://localhost:11434"
+
+    def test_contradiction_llm_url_not_affected_by_embed_url(self):
+        """Changing MEM0_EMBED_URL does NOT affect contradiction LLM URL."""
+        env = {
+            "MEM0_ENABLE_GRAPH": "true",
+            "MEM0_GRAPH_LLM_PROVIDER": "gemini_split",
+            "GOOGLE_API_KEY": "test-key",
+            "MEM0_GRAPH_CONTRADICTION_LLM_PROVIDER": "ollama",
+            "MEM0_EMBED_URL": "http://embed-box:11434",
+        }
+        _, _, split_config = self._build_with_env(env)
+        # Should be default, NOT the embed URL
+        assert split_config["contradiction_ollama_base_url"] == "http://localhost:11434"

@@ -28,7 +28,7 @@ def gemini_api_key():
     return key
 
 
-def _make_gemini_memory(qdrant_url, ollama_url, graph_llm_provider, gemini_api_key, anthropic_token):
+def _make_gemini_memory(qdrant_url, ollama_url, graph_llm_provider, gemini_api_key):
     """Create a Memory instance using the specified graph LLM provider."""
     original_collection = os.environ.get("MEM0_COLLECTION")
     original_graph = os.environ.get("MEM0_ENABLE_GRAPH")
@@ -42,16 +42,10 @@ def _make_gemini_memory(qdrant_url, ollama_url, graph_llm_provider, gemini_api_k
     os.environ["GOOGLE_API_KEY"] = gemini_api_key
 
     from mem0_mcp_selfhosted.config import build_config
-    from mem0_mcp_selfhosted.llm_anthropic import AnthropicOATConfig
-    from mem0.utils.factory import LlmFactory
+    from mem0_mcp_selfhosted.server import register_providers
 
-    config_dict, provider_info, split_config = build_config()
-
-    LlmFactory.register_provider(
-        name=provider_info["name"],
-        class_path=provider_info["class_path"],
-        config_class=AnthropicOATConfig,
-    )
+    config_dict, providers_info, split_config = build_config()
+    register_providers(providers_info)
 
     from mem0 import Memory
     memory = Memory.from_config(config_dict)
@@ -156,11 +150,11 @@ class TestGeminiGraphOperations:
     """Graph operations using Gemini as graph LLM provider."""
 
     def test_add_with_gemini_graph(
-        self, qdrant_url, ollama_url, neo4j_available, gemini_api_key, anthropic_token
+        self, qdrant_url, ollama_url, neo4j_available, gemini_api_key
     ):
         """Add memory with graph extraction using Gemini-only graph LLM."""
         memory, cleanup = _make_gemini_memory(
-            qdrant_url, ollama_url, "gemini", gemini_api_key, anthropic_token
+            qdrant_url, ollama_url, "gemini", gemini_api_key
         )
         try:
             result = call_with_graph(
@@ -184,11 +178,11 @@ class TestGeminiGraphOperations:
             cleanup()
 
     def test_add_with_gemini_split_graph(
-        self, qdrant_url, ollama_url, neo4j_available, gemini_api_key, anthropic_token
+        self, qdrant_url, ollama_url, neo4j_available, gemini_api_key
     ):
         """Add memory with graph extraction using split-model router (Gemini + Claude)."""
         memory, cleanup = _make_gemini_memory(
-            qdrant_url, ollama_url, "gemini_split", gemini_api_key, anthropic_token
+            qdrant_url, ollama_url, "gemini_split", gemini_api_key
         )
         try:
             result = call_with_graph(

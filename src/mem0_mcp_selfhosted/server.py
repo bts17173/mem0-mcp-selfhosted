@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
 
-from mem0_mcp_selfhosted.config import build_config
+from mem0_mcp_selfhosted.config import ProviderInfo, build_config
 from mem0_mcp_selfhosted.graph_tools import get_entity, search_graph
 from mem0_mcp_selfhosted.helpers import (
     _mem0_call,
@@ -35,21 +35,55 @@ mcp: FastMCP | None = None
 _enable_graph_default = False
 
 
+def register_providers(providers_info: list[ProviderInfo]) -> None:
+    """Register custom LLM providers with mem0ai's LlmFactory.
+
+    Maps provider names to their config classes and registers each.
+    Config classes are lazy-imported to avoid pulling in unnecessary
+    dependencies (e.g. ``anthropic`` package in Ollama-only mode).
+    Safe to call multiple times (LlmFactory.register_provider is idempotent).
+    """
+    if not providers_info:
+        return
+
+    from mem0.utils.factory import LlmFactory
+
+    for pi in providers_info:
+        config_class = _resolve_config_class(pi["name"])
+        if config_class is None:
+            logger.warning("No config class for provider %r, skipping", pi["name"])
+            continue
+        LlmFactory.register_provider(
+            name=pi["name"],
+            class_path=pi["class_path"],
+            config_class=config_class,
+        )
+
+
+def _resolve_config_class(provider_name: str) -> type | None:
+    """Lazy-resolve the config class for a provider name.
+
+    Imports are deferred so that unnecessary packages (e.g. ``anthropic``)
+    are never loaded in a pure-Ollama setup.
+    """
+    if provider_name == "ollama":
+        from mem0.configs.llms.ollama import OllamaConfig
+
+        return OllamaConfig
+    if provider_name == "anthropic":
+        from mem0_mcp_selfhosted.llm_anthropic import AnthropicOATConfig
+
+        return AnthropicOATConfig
+    return None
+
+
 def _init_memory() -> Any:
-    """Initialize mem0ai Memory with config and registered provider."""
+    """Initialize mem0ai Memory with config and registered providers."""
     global memory, _enable_graph_default
 
-    config_dict, provider_info, split_config = build_config()
+    config_dict, providers_info, split_config = build_config()
 
-    # Register custom provider with LlmFactory
-    from mem0.utils.factory import LlmFactory
-    from mem0_mcp_selfhosted.llm_anthropic import AnthropicOATConfig
-
-    LlmFactory.register_provider(
-        name=provider_info["name"],
-        class_path=provider_info["class_path"],
-        config_class=AnthropicOATConfig,
-    )
+    register_providers(providers_info)
 
     # Patch mem0ai's relationship sanitizer before Memory init
     patch_graph_sanitizer()

@@ -73,12 +73,15 @@ class TestMemoryLifecycle:
     def test_update_then_search(self, memory_instance, test_user_id):
         """Add a memory, update its text, then search for the new content."""
         add_result = memory_instance.add(
-            [{"role": "user", "content": "I use VS Code as my editor"}],
+            [{"role": "user", "content": "My preferred code editor is Visual Studio Code and I use it daily for Python development"}],
             user_id=test_user_id,
+        )
+        assert len(add_result.get("results", [])) >= 1, (
+            f"LLM did not extract any facts from the initial content: {add_result}"
         )
         memory_id = add_result["results"][0]["id"]
 
-        memory_instance.update(memory_id, data="I use Neovim as my editor")
+        memory_instance.update(memory_id, data="I switched from VS Code to Neovim as my primary editor for all development work")
 
         results = memory_instance.search(
             query="text editor preference",

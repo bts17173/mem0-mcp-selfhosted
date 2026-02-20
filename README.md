@@ -1,8 +1,8 @@
 # mem0-mcp-selfhosted
 
-Self-hosted [mem0](https://github.com/mem0ai/mem0) MCP server for Claude Code. Run a complete memory server against self-hosted Qdrant + Neo4j + Ollama while using Claude as the main LLM.
+Self-hosted [mem0](https://github.com/mem0ai/mem0) MCP server for Claude Code. Run a complete memory server against self-hosted Qdrant + Neo4j + Ollama, with your choice of Anthropic (Claude) or Ollama as the main LLM.
 
-Uses the `mem0ai` package directly as a library, authenticates through your existing Claude subscription (OAT token), and exposes 11 MCP tools for full memory management.
+Uses the `mem0ai` package directly as a library, supports both Claude's OAT token and fully local Ollama setups, and exposes 11 MCP tools for full memory management.
 
 ## Prerequisites
 
@@ -13,17 +13,40 @@ You need these services running:
 | **Qdrant** | Yes | Vector memory storage and search |
 | **Ollama** | Yes | Embedding generation (bge-m3 or similar) |
 | **Neo4j 5+** | Optional | Knowledge graph (entity relationships) |
-| **Anthropic API** | Yes | LLM for fact extraction, entity extraction, memory updates (auto-authenticates via Claude Code's OAT token — no paid API key required) |
+| **Anthropic API** | Conditional | LLM for fact extraction and memory updates. Required when `MEM0_LLM_PROVIDER=anthropic` (default). Not needed for fully local Ollama setups. Auto-authenticates via Claude Code's OAT token. |
 | **Google API** | Optional | Graph LLM for entity extraction (`gemini`/`gemini_split` providers) |
 
 Python >= 3.10.
 
 ## Quick Start
 
+### Default (Anthropic)
+
 Add the MCP server globally (available across all projects):
 
 ```bash
 claude mcp add --scope user --transport stdio mem0 \
+  --env MEM0_QDRANT_URL=http://localhost:6333 \
+  --env MEM0_EMBED_URL=http://localhost:11434 \
+  --env MEM0_EMBED_MODEL=bge-m3 \
+  --env MEM0_EMBED_DIMS=1024 \
+  --env MEM0_USER_ID=your-user-id \
+  -- uvx --from git+https://github.com/elvismdev/mem0-mcp-selfhosted.git mem0-mcp-selfhosted
+```
+
+`uvx` automatically downloads, installs, and runs the server in an isolated environment — no manual installation needed. Claude Code launches it on demand when the MCP connection starts.
+
+The server auto-reads your OAT token from `~/.claude/.credentials.json` — no manual token configuration needed.
+
+### Fully Local (Ollama)
+
+For a fully local setup with no cloud dependencies, use Ollama for both the main LLM and embeddings:
+
+```bash
+claude mcp add --scope user --transport stdio mem0 \
+  --env MEM0_LLM_PROVIDER=ollama \
+  --env MEM0_LLM_MODEL=qwen3:14b \
+  --env MEM0_LLM_URL=http://localhost:11434 \
   --env MEM0_QDRANT_URL=http://localhost:6333 \
   --env MEM0_EMBED_URL=http://localhost:11434 \
   --env MEM0_EMBED_MODEL=bge-m3 \
@@ -41,6 +64,9 @@ Or add it to a single project by creating `.mcp.json` in the project root:
       "command": "uvx",
       "args": ["--from", "git+https://github.com/elvismdev/mem0-mcp-selfhosted.git", "mem0-mcp-selfhosted"],
       "env": {
+        "MEM0_LLM_PROVIDER": "ollama",
+        "MEM0_LLM_MODEL": "qwen3:14b",
+        "MEM0_LLM_URL": "http://localhost:11434",
         "MEM0_QDRANT_URL": "http://localhost:6333",
         "MEM0_EMBED_URL": "http://localhost:11434",
         "MEM0_EMBED_MODEL": "bge-m3",
@@ -51,10 +77,6 @@ Or add it to a single project by creating `.mcp.json` in the project root:
   }
 }
 ```
-
-`uvx` automatically downloads, installs, and runs the server in an isolated environment — no manual installation needed. Claude Code launches it on demand when the MCP connection starts.
-
-The server auto-reads your OAT token from `~/.claude/.credentials.json` — no manual token configuration needed.
 
 ### Try It
 
@@ -145,9 +167,12 @@ All configuration is via environment variables. Create a `.env` file or set them
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MEM0_LLM_MODEL` | `claude-opus-4-6` | Anthropic model for all LLM operations |
-| `MEM0_LLM_MAX_TOKENS` | `16384` | Max tokens for LLM responses |
+| `MEM0_LLM_PROVIDER` | `anthropic` | Main LLM provider: `anthropic` or `ollama` |
+| `MEM0_LLM_MODEL` | _(per-provider)_ | Model for the selected LLM provider. Defaults to `claude-opus-4-6` for Anthropic, `qwen3:14b` for Ollama |
+| `MEM0_LLM_URL` | `http://localhost:11434` | Ollama base URL for the main LLM. Only used when `MEM0_LLM_PROVIDER=ollama` |
+| `MEM0_LLM_MAX_TOKENS` | `16384` | Max tokens for LLM responses (Anthropic only) |
 | `MEM0_GRAPH_LLM_PROVIDER` | `anthropic` | Graph LLM provider (`anthropic`, `anthropic_oat`, `ollama`, `gemini`, `gemini_split`) |
+| `MEM0_GRAPH_LLM_URL` | _(cascades)_ | Ollama base URL for graph LLM. Cascades: `MEM0_GRAPH_LLM_URL` → `MEM0_LLM_URL` → `http://localhost:11434` |
 | `MEM0_GRAPH_LLM_MODEL` | _(varies)_ | Graph model. Inherits `MEM0_LLM_MODEL` for anthropic/ollama; defaults to `gemini-2.5-flash-lite` for gemini/gemini_split |
 | `GOOGLE_API_KEY` | -- | Google API key (required for `gemini`/`gemini_split` graph providers) |
 | `MEM0_GRAPH_CONTRADICTION_LLM_PROVIDER` | `anthropic` | Contradiction LLM provider in `gemini_split` mode (`anthropic`, `anthropic_oat`, `ollama`) |
@@ -159,7 +184,7 @@ All configuration is via environment variables. Create a `.env` file or set them
 |----------|---------|-------------|
 | `MEM0_EMBED_PROVIDER` | `ollama` | Embedding provider (`ollama` or `openai`) |
 | `MEM0_EMBED_MODEL` | `bge-m3` | Embedding model name |
-| `MEM0_EMBED_URL` | `http://localhost:11434` | Ollama URL for embeddings |
+| `MEM0_EMBED_URL` | `http://localhost:11434` | Ollama URL for embeddings only. For LLM URLs, use `MEM0_LLM_URL` / `MEM0_GRAPH_LLM_URL` |
 | `MEM0_EMBED_DIMS` | `1024` | Embedding vector dimensions |
 
 ### Vector Store (Qdrant)
@@ -203,6 +228,7 @@ Claude Code
         |
         ├── auth.py              ← Hybrid token fallback chain
         ├── llm_anthropic.py     ← Custom Anthropic LLM provider (OAT + structured outputs)
+        ├── llm_ollama.py        ← Custom Ollama LLM provider (restored tool-calling)
         ├── config.py            ← Env vars → MemoryConfig dict
         ├── helpers.py           ← Error wrapper, concurrency lock, safe bulk-delete
         ├── graph_tools.py       ← Direct Neo4j Cypher queries (lazy driver)
@@ -214,10 +240,10 @@ Claude Code
               │     └── Graph: LLM entity extraction (tool calls) → Neo4j
               |
               └── Infrastructure
-                    ├── Qdrant     ← Vector store
-                    ├── Ollama     ← Embeddings
-                    ├── Neo4j      ← Knowledge graph (optional)
-                    └── Anthropic  ← LLM via OAT token
+                    ├── Qdrant          ← Vector store
+                    ├── Ollama          ← Embeddings
+                    ├── Neo4j           ← Knowledge graph (optional)
+                    └── Anthropic/Ollama ← Main LLM (configurable)
 ```
 
 ## Graph Memory & Quota
