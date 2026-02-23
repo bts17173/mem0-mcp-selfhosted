@@ -216,13 +216,17 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
         }
 
     # --- Provider registration info ---
-    # Always register custom Ollama provider — strict superset of upstream
-    # OllamaLLM (restores tool-calling removed in mem0ai PR #3241).
+    # Always register custom Ollama and OpenAI-compat providers — strict
+    # supersets of upstream (restored tool-calling, response_format handling).
     # Registering even when not used has no side effects.
     providers_info: list[ProviderInfo] = [
         {
             "name": "ollama",
             "class_path": "mem0_mcp_selfhosted.llm_ollama.OllamaToolLLM",
+        },
+        {
+            "name": "openai",
+            "class_path": "mem0_mcp_selfhosted.llm_openai_compat.OpenAICompatLLM",
         },
     ]
     # Register Anthropic when used as main LLM or as graph LLM
