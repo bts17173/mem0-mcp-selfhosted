@@ -31,8 +31,6 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
         - providers_info: list of ProviderInfo dicts (name + class_path)
         - split_config: if gemini_split was requested, config for the SplitModelGraphLLM
     """
-    token = resolve_token()
-
     # --- LLM ---
     llm_provider = os.environ.get("MEM0_LLM_PROVIDER", "anthropic")
     _supported_llm_providers = ("anthropic", "ollama", "openai")
@@ -53,8 +51,9 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
     llm_config: dict[str, Any] = {"model": llm_model}
     if llm_provider == "anthropic":
         llm_config["max_tokens"] = llm_max_tokens
-        if token:
-            llm_config["api_key"] = token
+        _anthropic_token = resolve_token()
+        if _anthropic_token:
+            llm_config["api_key"] = _anthropic_token
     elif llm_provider == "ollama":
         llm_config["ollama_base_url"] = os.environ.get(
             "MEM0_LLM_URL", "http://localhost:11434"
@@ -180,8 +179,9 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
             )
             graph_llm_config["ollama_base_url"] = graph_llm_url
         elif graph_llm_provider in ("anthropic", "anthropic_oat"):
-            if token:
-                graph_llm_config["api_key"] = token
+            _graph_token = resolve_token()
+            if _graph_token:
+                graph_llm_config["api_key"] = _graph_token
             graph_llm_config["max_tokens"] = llm_max_tokens
         elif graph_llm_provider == "gemini":
             # Use mem0ai's built-in GeminiLLM provider
@@ -257,8 +257,9 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
         }
         if google_api_key:
             split_config["extraction_api_key"] = google_api_key
-        if contradiction_provider in ("anthropic", "anthropic_oat") and token:
-            split_config["contradiction_api_key"] = token
+        _contra_token = resolve_token() if contradiction_provider in ("anthropic", "anthropic_oat") else None
+        if _contra_token:
+            split_config["contradiction_api_key"] = _contra_token
         elif contradiction_provider == "ollama":
             split_config["contradiction_ollama_base_url"] = os.environ.get(
                 "MEM0_GRAPH_LLM_URL",
