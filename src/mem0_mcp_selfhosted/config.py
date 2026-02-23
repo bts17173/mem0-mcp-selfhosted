@@ -35,14 +35,18 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
 
     # --- LLM ---
     llm_provider = os.environ.get("MEM0_LLM_PROVIDER", "anthropic")
-    _supported_llm_providers = ("anthropic", "ollama")
+    _supported_llm_providers = ("anthropic", "ollama", "openai")
     if llm_provider not in _supported_llm_providers:
         raise ValueError(
             f"Unsupported MEM0_LLM_PROVIDER={llm_provider!r}. "
             f"Supported: {list(_supported_llm_providers)}"
         )
 
-    _llm_model_defaults = {"anthropic": "claude-opus-4-6", "ollama": "qwen3:14b"}
+    _llm_model_defaults = {
+        "anthropic": "claude-opus-4-6",
+        "ollama": "qwen3:14b",
+        "openai": "qwen3-235b-a22b",
+    }
     llm_model = os.environ.get("MEM0_LLM_MODEL", _llm_model_defaults[llm_provider])
     llm_max_tokens = int(os.environ.get("MEM0_LLM_MAX_TOKENS", "16384"))
 
@@ -55,6 +59,13 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
         llm_config["ollama_base_url"] = os.environ.get(
             "MEM0_LLM_URL", "http://localhost:11434"
         )
+    elif llm_provider == "openai":
+        llm_url = os.environ.get("MEM0_LLM_URL")
+        llm_api_key = os.environ.get("MEM0_LLM_API_KEY")
+        if llm_url:
+            llm_config["openai_base_url"] = llm_url
+        if llm_api_key:
+            llm_config["api_key"] = llm_api_key
 
     # --- Embedder ---
     embed_provider = os.environ.get("MEM0_EMBED_PROVIDER", "ollama")
