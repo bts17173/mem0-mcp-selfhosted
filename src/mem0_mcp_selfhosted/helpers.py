@@ -5,7 +5,7 @@
 - call_with_graph(): Concurrency-safe enable_graph toggle
 - safe_bulk_delete(): Iterate + individual delete (never memory.delete_all())
 - get_default_user_id(): Default user_id injection
-- list_entities_facet(): Qdrant Facet API entity listing with scroll fallback
+- list_entities_facet(): Entity listing with Qdrant Facet API or Milvus scroll fallback
 """
 
 from __future__ import annotations
@@ -162,6 +162,23 @@ def call_with_graph(
         return func(*args, **kwargs)
 
 
+def _extract_memories_from_list(result: Any) -> list:
+    """Normalize vector_store.list() return value across backends.
+
+    Qdrant returns (records, next_page_offset) tuple.
+    Milvus returns [list_of_OutputData] (single-element list containing a list).
+    """
+    if isinstance(result, tuple):
+        # Qdrant format
+        return result[0]
+    if isinstance(result, list) and len(result) == 1 and isinstance(result[0], list):
+        # Milvus format: [[OutputData, ...]]
+        return result[0]
+    if isinstance(result, list):
+        return result
+    return []
+
+
 def safe_bulk_delete(memory: Any, filters: dict[str, Any]) -> int:
     """Safely delete all memories matching filters.
 
@@ -170,14 +187,11 @@ def safe_bulk_delete(memory: Any, filters: dict[str, Any]) -> int:
 
     Returns the count of deleted memories.
     """
-    # Get all memories matching the filters
-    # Qdrant.list() returns raw scroll result: (records, next_page_offset)
     result = memory.vector_store.list(filters=filters)
-    memories = result[0] if isinstance(result, tuple) else result
+    memories = _extract_memories_from_list(result)
 
     count = 0
     for item in memories:
-        # Extract memory_id from the Qdrant point
         memory_id = item.id if hasattr(item, "id") else item.get("id") if isinstance(item, dict) else str(item)
         try:
             memory.delete(memory_id)
@@ -196,52 +210,48 @@ def safe_bulk_delete(memory: Any, filters: dict[str, Any]) -> int:
 
 
 def list_entities_facet(memory: Any) -> dict[str, list[dict]]:
-    """List entities using Qdrant Facet API with scroll fallback.
+    """List entities with Qdrant Facet API or generic scroll fallback.
 
-    Primary: Facet API (Qdrant v1.12+) — server-side distinct value aggregation.
-    Fallback: scroll+dedupe for older Qdrant versions.
+    For Qdrant: tries Facet API (v1.12+) first, then scroll+dedupe.
+    For Milvus and others: uses scroll+dedupe directly.
 
     Returns: {"users": [{"value": ..., "count": ...}], "agents": [...], "runs": [...]}
     """
-    client = memory.vector_store.client
-    collection = memory.vector_store.collection_name
+    # Check if this is a Qdrant backend (has facet API)
+    client = getattr(memory.vector_store, "client", None)
+    has_facet = client is not None and hasattr(client, "facet")
 
-    result: dict[str, list[dict]] = {"users": [], "agents": [], "runs": []}
-    entity_keys = {"users": "user_id", "agents": "agent_id", "runs": "run_id"}
+    if has_facet:
+        collection = memory.vector_store.collection_name
+        result: dict[str, list[dict]] = {"users": [], "agents": [], "runs": []}
+        entity_keys = {"users": "user_id", "agents": "agent_id", "runs": "run_id"}
+        try:
+            for result_key, payload_key in entity_keys.items():
+                facet_response = client.facet(
+                    collection_name=collection,
+                    key=payload_key,
+                )
+                result[result_key] = [
+                    {"value": hit.value, "count": hit.count}
+                    for hit in facet_response.hits
+                ]
+            return result
+        except Exception as exc:
+            logger.warning("Qdrant Facet API failed (%s), falling back to scroll.", exc)
 
-    try:
-        for result_key, payload_key in entity_keys.items():
-            facet_response = client.facet(
-                collection_name=collection,
-                key=payload_key,
-            )
-            result[result_key] = [
-                {"value": hit.value, "count": hit.count}
-                for hit in facet_response.hits
-            ]
-        return result
-    except Exception as exc:
-        # Facet API unavailable — fall back to scroll+dedupe
-        logger.warning(
-            "Qdrant Facet API unavailable (%s). Falling back to scroll+dedupe. "
-            "Upgrade to Qdrant v1.12+ for better performance.",
-            exc,
-        )
-        return _list_entities_scroll_fallback(memory)
+    return _list_entities_scroll_fallback(memory)
 
 
 def _list_entities_scroll_fallback(memory: Any) -> dict[str, list[dict]]:
-    """Fallback entity listing via scroll+dedupe."""
+    """Fallback entity listing via scroll+dedupe (works for all backends)."""
     entities: dict[str, dict[str, int]] = {
         "user_id": {},
         "agent_id": {},
         "run_id": {},
     }
 
-    # Scroll through all memories in batches
-    # Qdrant.list() returns raw scroll result: (records, next_page_offset)
     result = memory.vector_store.list(filters={}, limit=500)
-    all_memories = result[0] if isinstance(result, tuple) else result
+    all_memories = _extract_memories_from_list(result)
     for item in all_memories:
         payload = item.payload if hasattr(item, "payload") else item
         if isinstance(payload, dict):

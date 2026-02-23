@@ -301,8 +301,8 @@ def _register_tools(mcp: FastMCP) -> None:
     def list_entities() -> str:
         """List which users/agents/runs currently hold memories.
 
-        Uses Qdrant Facet API (v1.12+) for server-side aggregation,
-        with scroll+dedupe fallback for older versions.
+        Uses Qdrant Facet API when available, with scroll+dedupe fallback
+        for Milvus and other backends.
         """
         def _do_list():
             return list_entities_facet(memory)

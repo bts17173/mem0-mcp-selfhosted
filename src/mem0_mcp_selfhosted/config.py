@@ -61,28 +61,53 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
     embed_model = os.environ.get("MEM0_EMBED_MODEL", "bge-m3")
     embed_url = os.environ.get("MEM0_EMBED_URL", "http://localhost:11434")
     embed_dims = int(os.environ.get("MEM0_EMBED_DIMS", "1024"))
+    embed_api_key = os.environ.get("MEM0_EMBED_API_KEY")
 
     embedder_config: dict[str, Any] = {
         "model": embed_model,
     }
     if embed_provider == "ollama":
         embedder_config["ollama_base_url"] = embed_url
+    elif embed_provider == "openai":
+        embedder_config["openai_base_url"] = embed_url
+        embedder_config["embedding_dims"] = embed_dims
+        if embed_api_key:
+            embedder_config["api_key"] = embed_api_key
 
     # --- Vector Store ---
-    qdrant_url = os.environ.get("MEM0_QDRANT_URL", "http://localhost:6333")
+    vector_provider = os.environ.get("MEM0_VECTOR_PROVIDER", "milvus")
     collection = os.environ.get("MEM0_COLLECTION", "mem0_mcp_selfhosted")
-    qdrant_api_key = os.environ.get("MEM0_QDRANT_API_KEY")
-    qdrant_on_disk = _bool_env("MEM0_QDRANT_ON_DISK")
 
-    vector_config: dict[str, Any] = {
-        "collection_name": collection,
-        "url": qdrant_url,
-        "embedding_model_dims": embed_dims,
-    }
-    if qdrant_api_key:
-        vector_config["api_key"] = qdrant_api_key
-    if qdrant_on_disk:
-        vector_config["on_disk"] = True
+    if vector_provider == "milvus":
+        milvus_url = os.environ.get("MEM0_MILVUS_URL", "http://localhost:19530")
+        milvus_token = os.environ.get("MEM0_MILVUS_TOKEN")
+        milvus_db_name = os.environ.get("MEM0_MILVUS_DB_NAME", "")
+        milvus_metric = os.environ.get("MEM0_MILVUS_METRIC_TYPE", "L2")
+
+        vector_config: dict[str, Any] = {
+            "collection_name": collection,
+            "url": milvus_url,
+            "embedding_model_dims": embed_dims,
+            "metric_type": milvus_metric,
+            "token": milvus_token or "",
+        }
+        if milvus_db_name:
+            vector_config["db_name"] = milvus_db_name
+    else:
+        # Qdrant fallback
+        qdrant_url = os.environ.get("MEM0_QDRANT_URL", "http://localhost:6333")
+        qdrant_api_key = os.environ.get("MEM0_QDRANT_API_KEY")
+        qdrant_on_disk = _bool_env("MEM0_QDRANT_ON_DISK")
+
+        vector_config: dict[str, Any] = {
+            "collection_name": collection,
+            "url": qdrant_url,
+            "embedding_model_dims": embed_dims,
+        }
+        if qdrant_api_key:
+            vector_config["api_key"] = qdrant_api_key
+        if qdrant_on_disk:
+            vector_config["on_disk"] = True
 
     # --- History ---
     history_db_path = os.environ.get("MEM0_HISTORY_DB_PATH")
@@ -98,7 +123,7 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
             "config": embedder_config,
         },
         "vector_store": {
-            "provider": "qdrant",
+            "provider": vector_provider,
             "config": vector_config,
         },
         "version": "v1.1",

@@ -16,6 +16,7 @@ dependencies = [
     "mem0ai[graph,llms]>=1.0.3",
     "anthropic>=0.77.0",
     "neo4j>=5.23.1",
+    "pymilvus>=2.4.0",
     "python-dotenv>=1.2.1",
 ]
 
@@ -33,6 +34,6 @@ dev = [
 
 [tool.pytest.ini_options]
 markers = [
-    "integration: tests that require live infrastructure (Qdrant, Ollama, Anthropic, Neo4j)",
+    "integration: tests that require live infrastructure (Milvus, Qdrant, Ollama, Anthropic, Neo4j)",
     "contract: tests that validate mem0ai internal API stability",
 ]
