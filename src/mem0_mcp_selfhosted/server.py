@@ -93,6 +93,26 @@ def _init_memory() -> Any:
 
     memory = Memory.from_config(config_dict)
 
+    # Swap to hybrid Milvus if enabled (requires Milvus 2.5+ for BM25 Function)
+    _hybrid_enabled = os.environ.get("MEM0_MILVUS_HYBRID", "false").lower() in ("true", "1", "yes")
+    if config_dict["vector_store"]["provider"] == "milvus" and _hybrid_enabled:
+        from mem0_mcp_selfhosted.milvus_hybrid import HybridMilvusDB
+
+        _vc = config_dict["vector_store"]["config"]
+        analyzer = os.environ.get("MEM0_MILVUS_ANALYZER", "chinese")
+        hybrid_store = HybridMilvusDB(
+            url=_vc["url"],
+            token=_vc.get("token", ""),
+            collection_name=_vc["collection_name"] + "_hybrid",
+            embedding_model_dims=_vc["embedding_model_dims"],
+            metric_type=_vc.get("metric_type", "COSINE"),
+            db_name=_vc.get("db_name", ""),
+            enable_hybrid=True,
+            analyzer_type=analyzer,
+        )
+        memory.vector_store = hybrid_store
+        logger.info("Swapped to HybridMilvusDB (dense + BM25)")
+
     # If split-model was requested, swap the graph LLM with the router
     if split_config and memory.graph is not None:
         from mem0_mcp_selfhosted.llm_router import SplitModelGraphLLM, SplitModelGraphLLMConfig
