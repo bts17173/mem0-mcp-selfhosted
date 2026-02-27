@@ -158,8 +158,13 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
             "username": neo4j_user,
             "password": neo4j_password,
         }
+        # WORKAROUND: mem0's graph_memory.py passes config values as positional
+        # args to Neo4jGraph(url, username, password, ...) where the 4th param is
+        # `token`, NOT `database`. Putting database in config would assign it to
+        # token → AuthError. Instead, set NEO4J_DATABASE env var which
+        # langchain_neo4j reads via get_from_dict_or_env().
         if neo4j_database:
-            graph_neo4j_config["database"] = neo4j_database
+            os.environ["NEO4J_DATABASE"] = neo4j_database
         if neo4j_base_label:
             graph_neo4j_config["base_label"] = neo4j_base_label
 
@@ -172,7 +177,20 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
             "model": graph_llm_model,
         }
 
-        if graph_llm_provider == "ollama":
+        if graph_llm_provider == "openai":
+            graph_llm_url = os.environ.get(
+                "MEM0_GRAPH_LLM_URL",
+                os.environ.get("MEM0_LLM_URL"),
+            )
+            graph_llm_api_key = os.environ.get(
+                "MEM0_GRAPH_LLM_API_KEY",
+                os.environ.get("MEM0_LLM_API_KEY"),
+            )
+            if graph_llm_url:
+                graph_llm_config["openai_base_url"] = graph_llm_url
+            if graph_llm_api_key:
+                graph_llm_config["api_key"] = graph_llm_api_key
+        elif graph_llm_provider == "ollama":
             graph_llm_url = os.environ.get(
                 "MEM0_GRAPH_LLM_URL",
                 os.environ.get("MEM0_LLM_URL", "http://localhost:11434"),

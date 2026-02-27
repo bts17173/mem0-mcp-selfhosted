@@ -45,6 +45,12 @@ class OpenAICompatLLM(OpenAILLM):
             and response_format.get("type") == "json_object"
         )
 
+        # qwen3 thinking mode interferes with tool calling — disable it
+        # when tools are requested and model is qwen3-based
+        if tools and self._is_qwen3_thinking_model():
+            kwargs.setdefault("extra_body", {})
+            kwargs["extra_body"].setdefault("enable_thinking", False)
+
         if needs_json:
             # Copy messages to avoid mutating the caller's list
             messages = [dict(m) for m in messages]
@@ -79,3 +85,8 @@ class OpenAICompatLLM(OpenAILLM):
                 tool_choice=tool_choice,
                 **kwargs,
             )
+
+    def _is_qwen3_thinking_model(self) -> bool:
+        """Check if the model is qwen3 with default thinking mode enabled."""
+        model = getattr(self.config, "model", "") or ""
+        return model.startswith("qwen3-")
